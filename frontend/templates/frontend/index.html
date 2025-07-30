@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darwix AI Assessment - Interactive Demo</title>
+    {% load static %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .feature-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 25px;
+            background: #fafafa;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .feature-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            padding: 25px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #999;
+        }
+
+        .upload-area.dragover {
+            border-color: #666;
+            background-color: #f9f9f9;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .textarea:focus {
+            outline: none;
+            border-color: #666;
+        }
+
+        .btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #555;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .results h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            background: #fff5f5;
+            border-color: #e53e3e;
+            color: #c53030;
+        }
+
+        .success {
+            background: #f0fff4;
+            border-color: #38a169;
+            color: #2f855a;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .suggestion-item {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .diarization-segment {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .speaker-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .api-links {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .api-links h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .api-link {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .api-link:hover {
+            background: #e0e0e0;
+        }
+
+        .stats-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .stats-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Darwix AI Assessment</h1>
+            <p>Audio Transcription & Blog Title Generation</p>
+        </div>
+
+        <div class="features-grid">
+            <!-- Audio Transcription Feature -->
+            <div class="feature-card">
+                <div class="feature-title">
+                    Audio Transcription with Diarization
+                </div>
+                <div class="feature-description">
+                    Upload an audio or video file to get transcription with speaker identification.
+                </div>
+                
+                <div class="upload-area" id="audioUpload">
+                    <input type="file" id="audioFile" class="file-input" accept="audio/*,video/*,.mp4,.wav,.mp3,.m4a">
+                    <div class="upload-text">
+                        Click to select an audio/video file or drag & drop here<br>
+                        <small>Supported: WAV, MP3, M4A, MP4 (max 25MB)</small>
+                    </div>
+                </div>
+
+                <button class="btn" id="transcribeBtn" disabled>
+                    Transcribe Audio
+                </button>
+
+                <div id="transcriptionResults" style="display: none;"></div>
+            </div>
+
+            <!-- Blog Title Generation Feature -->
+            <div class="feature-card">
+                <div class="feature-title">
+                    AI Blog Title Suggestions
+                </div>
+                <div class="feature-description">
+                    Enter your blog post content and get 3 AI-generated title suggestions.
+                </div>
+
+                <textarea 
+                    class="textarea" 
+                    id="blogContent" 
+                    placeholder="Enter your blog post content here..."
+                ></textarea>
+
+                <button class="btn" id="generateTitlesBtn">
+                    Generate Titles
+                </button>
+
+                <div id="titleResults" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Statistics Display -->
+        <div class="stats-section" style="display: none;" id="statsSection">
+            <h3>Processing Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Processing Time</div>
+                    <div class="stat-value" id="processingTime">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">File Size</div>
+                    <div class="stat-value" id="fileSize">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Word Count</div>
+                    <div class="stat-value" id="wordCount">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Speakers Detected</div>
+                    <div class="stat-value" id="speakerCount">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-links">
+            <h3>API Documentation</h3>
+            <a href="/swagger/" class="api-link" target="_blank">Swagger UI</a>
+            <a href="/admin/" class="api-link" target="_blank">Admin Panel</a>
+        </div>
+    </div>
+
+    <script>
+        // Audio Upload Handling
+        const audioUpload = document.getElementById('audioUpload');
+        const audioFile = document.getElementById('audioFile');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const transcriptionResults = document.getElementById('transcriptionResults');
+
+        // Blog Content Handling
+        const blogContent = document.getElementById('blogContent');
+        const generateTitlesBtn = document.getElementById('generateTitlesBtn');
+        const titleResults = document.getElementById('titleResults');
+
+        // Audio upload click handler
+        audioUpload.addEventListener('click', () => {
+            audioFile.click();
+        });
+
+        // Drag and drop for audio files
+        audioUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            audioUpload.classList.add('dragover');
+        });
+
+        audioUpload.addEventListener('dragleave', () => {
+            audioUpload.classList.remove('dragover');
+        });
+
+        audioUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            audioUpload.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                audioFile.files = files;
+                handleAudioFileSelection();
+            }
+        });
+
+        // Audio file selection handler
+        audioFile.addEventListener('change', handleAudioFileSelection);
+
+        function handleAudioFileSelection() {
+            const file = audioFile.files[0];
+            if (file) {
+                const uploadText = audioUpload.querySelector('.upload-text');
+                uploadText.innerHTML = `Selected: ${file.name}<br><small>Size: ${(file.size / 1024 / 1024).toFixed(2)} MB</small>`;
+                transcribeBtn.disabled = false;
+            }
+        }
+
+        // Transcription handler
+        transcribeBtn.addEventListener('click', async () => {
+            const file = audioFile.files[0];
+            if (!file) return;
+
+            const startTime = Date.now();
+
+            // Show loading state
+            transcribeBtn.innerHTML = '<div class="loading"><div class="spinner"></div><span>Transcribing...</span></div>';
+            transcribeBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('audio_file', file);
+
+            try {
+                const response = await fetch('/api/transcribe/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                displayTranscriptionResults(data);
+                updateStatistics(file, data, processingTime);
+                
+            } catch (error) {
+                console.error('Transcription error:', error);
+                displayError('transcriptionResults', 'Network error: ' + error.message);
+            } finally {
+                transcribeBtn.innerHTML = 'Transcribe Audio';
+                transcribeBtn.disabled = false;
+            }
+        });
+
+        // Title generation handler
+        generateTitlesBtn.addEventListener('click', async () => {
+            const content = blogContent.value.trim();
+            if (!content) {
+                displayError('titleResults', 'Please enter some blog content first');
+                return;
+            }
+
+            // Show loading state
+            generateTitlesBtn.innerHTML = '<div class="loading"><div class="spinner"></div><span>Generating Titles...</span></div>';
+            generateTitlesBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/suggest-titles/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                displayTitleResults(data);
+                
+            } catch (error) {
+                console.error('Title generation error:', error);
+                displayError('titleResults', 'Network error: ' + error.message);
+            } finally {
+                generateTitlesBtn.innerHTML = 'Generate Titles';
+                generateTitlesBtn.disabled = false;
+            }
+        });
+
+        // Statistics update function
+        function updateStatistics(file, transcriptionData, processingTime) {
+            document.getElementById('processingTime').textContent = processingTime + 's';
+            document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            
+            // Count words in transcription
+            let wordCount = 0;
+            if (transcriptionData.diarization && transcriptionData.diarization.length > 0) {
+                wordCount = transcriptionData.diarization
+                    .map(segment => segment.text.trim().split(/\s+/).length)
+                    .reduce((a, b) => a + b, 0);
+            }
+            document.getElementById('wordCount').textContent = wordCount;
+            
+            // Count unique speakers
+            const speakers = new Set();
+            if (transcriptionData.diarization) {
+                transcriptionData.diarization.forEach(segment => {
+                    speakers.add(segment.speaker);
+                });
+            }
+            document.getElementById('speakerCount').textContent = speakers.size;
+            
+            // Show statistics section
+            document.getElementById('statsSection').style.display = 'block';
+        }
+
+        // Results display functions
+        function displayTranscriptionResults(data) {
+            let html = '<div class="results success"><h4>Transcription Complete</h4>';
+            
+            // Check if this is a demo result
+            if (data.full_transcription && data.full_transcription.includes('FFmpeg is required')) {
+                html += '<div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; margin: 10px 0; border-radius: 4px; color: #856404;">';
+                html += '<strong>⚠️ Demo Mode:</strong> This is a demonstration result. ';
+                html += 'To process real audio files, please install FFmpeg. ';
+                html += '<a href="https://ffmpeg.org/download.html" target="_blank">Download FFmpeg</a>';
+                html += '</div>';
+            }
+            
+            if (data.full_transcription) {
+                html += `<div><strong>Full Text:</strong><br>${data.full_transcription}</div><br>`;
+            }
+
+            if (data.diarization && data.diarization.length > 0) {
+                html += '<div><strong>Speaker Diarization:</strong></div>';
+                data.diarization.forEach(segment => {
+                    html += `
+                        <div class="diarization-segment">
+                            <div class="speaker-label">${segment.speaker}</div>
+                            <div class="timestamp">${segment.start.toFixed(2)}s - ${segment.end.toFixed(2)}s</div>
+                            <div>"${segment.text}"</div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += '</div>';
+            transcriptionResults.innerHTML = html;
+            transcriptionResults.style.display = 'block';
+        }
+
+        function displayTitleResults(data) {
+            let html = '<div class="results success"><h4>Title Suggestions Generated</h4>';
+            
+            if (data.suggestions && data.suggestions.length > 0) {
+                data.suggestions.forEach((title, index) => {
+                    html += `
+                        <div class="suggestion-item">
+                            <strong>${index + 1}. ${title}</strong>
+                        </div>
+                    `;
+                });
+            }
+
+            html += '</div>';
+            titleResults.innerHTML = html;
+            titleResults.style.display = 'block';
+        }
+
+        function displayError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="results error"><h4>Error</h4><p>${message}</p></div>`;
+            element.style.display = 'block';
+        }
+
+        // Utility functions
+        function getCsrfToken() {
+            // Try to get from meta tag first
+            const metaToken = document.querySelector('meta[name="csrf-token"]');
+            if (metaToken) {
+                return metaToken.getAttribute('content');
+            }
+            
+            // Fallback to cookie method
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+
+        // Add sample content for quick testing
+        document.addEventListener('DOMContentLoaded', () => {
+            blogContent.value = `Artificial intelligence is revolutionizing the way we work and live. Machine learning algorithms are becoming more sophisticated, enabling computers to perform tasks that once required human intelligence. From autonomous vehicles to medical diagnosis, AI is transforming industries and creating new opportunities for innovation.
+
+The rapid advancement of AI technologies has sparked both excitement and concern. While AI promises to solve complex problems and improve efficiency, it also raises questions about job displacement, privacy, and ethical considerations. As we navigate this technological transformation, it's crucial to develop AI systems that are transparent, fair, and beneficial to society.
+
+Companies are increasingly investing in AI research and development, recognizing its potential to drive competitive advantage. From chatbots and recommendation systems to predictive analytics and automation, AI applications are becoming ubiquitous across various sectors.`;
+        });
+    </script>
+</body>
+</html>
