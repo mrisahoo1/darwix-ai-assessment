@@ -17,7 +17,7 @@
 - **Multilingual Support**: 39 languages auto-detected (bonus feature)
 
 ### **Feature 2: AI Title Suggestions for Blog Posts**
-- **NLP Integration**: Content-aware title generation using TF-IDF and NLTK
+- **NLP Integration**: Content-aware title generation using TF-IDF and NLTK - [Better results can be achieved with BERT/BART]
 - **Django Integration**: RESTful API endpoint with proper error handling
 - **3 Title Suggestions**: Multiple algorithmic approaches for variety
 - **JSON Response Format**: Structured output with metadata
